@@ -21,12 +21,15 @@ class GL(nn.Module):
         super(GL,self).__init__()
         self.out = nn.Linear(16,16,bias=False)
         self.fankui = nn.Linear(16,16,bias=False)
+        self.act1 = nn.Tanh()
     
     def forward(self,data,graph): 
-        out_1 = torch.matmul(graph,data)
-        out_2 = self.fankui(data)
-        out_3 = self.out(data)
-        out_4 = self.out(out_1+out_2-out_3)
+        out_1 = torch.matmul(graph,data) #A*X
+        out_2 = self.out(data) #Wf*X
+        out_2 = self.act1(out_2) 
+        out_3 = self.fankui(out_2) #C*X
+        out_3 = self.act1(out_3) 
+        out_4 = self.out(out_1-out_3) #C(A*X+Wf*X-C*X)
         return out_4 
 import torch
 import torch.nn as nn
@@ -134,6 +137,7 @@ class ChebNet(nn.Module):
         init.xavier_normal_(self.weight)
         self.LL = nn.Linear(3,8)
         self.LL1 = nn.Linear(8,16)
+        self.c = nn.Linear(16,16)
 
 
 
@@ -163,6 +167,8 @@ class ChebNet(nn.Module):
         res_8 = res_7+0.5*self.GL(res_7,L)+0.5*self.GL(res_6+2*self.GL(res_7,L),L)
         step_0 = res_8+0.5*self.GL(res_8,L)+0.5*self.GL(res_7+2*self.GL(res_8,L),L)
         step_1 = step_0+0.5*self.GL(step_0,L)+0.5*self.GL(res_8+2*self.GL(step_0,L),L)
+        step_0 = self.c(step_0)
+        step_1 = self.c(step_1)
         
 #         res_1 = output+0.1*torch.matmul((L-I),output) 
 #         res_2 = res_1+0.1*torch.matmul((L-I),res_1)        
