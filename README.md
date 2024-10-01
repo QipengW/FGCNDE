@@ -1,4 +1,4 @@
-# Full-dimensional State Observation Graph Convolutional Neural Differential Equation for Spatio-temporal Time Series Prediction
+# State Feedback Enhanced Graph Differential Equation for Spatio-temporal Time Series Prediction
 # Dataloader
 The three zip files store the three data sets used in this article and the code for loading the data sets. The code has been divided into training set, verification set and test set and can be run directly. Among them, the PEMS04 data set failed to be successfully uploaded due to upload size restrictions. Please feel free to contact us if necessary.
 # Model
