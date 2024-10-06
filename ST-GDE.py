@@ -25,11 +25,11 @@ class GL(nn.Module):
     
     def forward(self,data,graph): 
         out_1 = torch.matmul(graph,data) #A*X
-        out_2 = self.out(data) #Wf*X
+        out_2 = self.out(data) #B*X
         out_2 = self.act1(out_2) 
-        out_3 = self.fankui(out_2) #C*X
+        out_3 = self.fankui(out_2) #KB*X
         out_3 = self.act1(out_3) 
-        out_4 = self.out(out_1-out_3) #C(A*X+Wf*X-C*X)
+        out_4 = out_1-out_3 #(A*X-KBX)
         return out_4 
 import torch
 import torch.nn as nn
@@ -138,6 +138,7 @@ class ChebNet(nn.Module):
         self.LL = nn.Linear(3,8)
         self.LL1 = nn.Linear(8,16)
         self.c = nn.Linear(16,16)
+        self.c1 = nn.Linear(16,16)
 
 
 
@@ -168,7 +169,7 @@ class ChebNet(nn.Module):
         step_0 = res_8+0.5*self.GL(res_8,L)+0.5*self.GL(res_7+2*self.GL(res_8,L),L)
         step_1 = step_0+0.5*self.GL(step_0,L)+0.5*self.GL(res_8+2*self.GL(step_0,L),L)
         step_0 = self.c(step_0)
-        step_1 = self.c(step_1)
+        step_1 = self.c1(step_1)
         
 #         res_1 = output+0.1*torch.matmul((L-I),output) 
 #         res_2 = res_1+0.1*torch.matmul((L-I),res_1)        
