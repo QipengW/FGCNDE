@@ -22,6 +22,7 @@ class GL(nn.Module):
         self.out = nn.Linear(16,16,bias=False)
         self.fankui = nn.Linear(16,16,bias=False)
         self.act1 = nn.Tanh()
+        self.tiaozheng = nn.Linear(16,16)
     
     def forward(self,data,graph): 
         out_1 = torch.matmul(graph,data) #A*X
@@ -29,7 +30,7 @@ class GL(nn.Module):
         out_2 = self.act1(out_2) 
         out_3 = self.fankui(out_2) #KB*X
         out_3 = self.act1(out_3) 
-        out_4 = out_1-out_3 #(A*X-KBX)
+        out_4 = self.tiaozheng(out_1-out_3) #(A*X-KBX)
         return out_4 
 import torch
 import torch.nn as nn
@@ -168,33 +169,28 @@ class ChebNet(nn.Module):
         res_8 = res_7+0.5*self.GL(res_7,L)+0.5*self.GL(res_6+2*self.GL(res_7,L),L)
         step_0 = res_8+0.5*self.GL(res_8,L)+0.5*self.GL(res_7+2*self.GL(res_8,L),L)
         step_1 = step_0+0.5*self.GL(step_0,L)+0.5*self.GL(res_8+2*self.GL(step_0,L),L)
-        step_0 = self.c(step_0)
-        step_1 = self.c1(step_1)
-        
-#         res_1 = output+0.1*torch.matmul((L-I),output) 
-#         res_2 = res_1+0.1*torch.matmul((L-I),res_1)        
-#         res_3 = res_2+0.1*torch.matmul((L-I),res_2)        
-#         res_4 = res_3+0.1*torch.matmul((L-I),res_3)        
-#         res_5 = res_4+0.1*torch.matmul((L-I),res_4)
-#         res_6 = res_5+0.1*torch.matmul((L-I),res_5)        
-#         res_7 = res_6+0.1*torch.matmul((L-I),res_6)        
-#         res_8 = res_7+0.1*torch.matmul((L-I),res_7)
-#         res_9 = res_8+0.1*torch.matmul((L-I),res_8)
-#         res_0 = res_9+0.1*torch.matmul((L-I),res_9)  
-#         step_0 = torch.matmul((res_1+res_2+res_3+res_4+res_5+res_6+res_7+res_8+res_9),self.weight) #[B,40,1,8]   
-#         step_1 = torch.matmul((res_1+res_2+res_3+res_4+res_5+res_6+res_7+res_8+res_9+res_0),self.weight) #[B,40,1,8]   
-        
-        
-        
-        
+        step_00 = self.c(step_0)
+        step_11 = self.c1(step_1)
+
+        gate = 0.1*torch.ones(B).to(device)
+        a1 = torch.mean(F.relu(torch.sum(torch.sum(2*out*self.GL(out,L),dim=2),dim=1)+gate))
+        a2 = torch.mean(F.relu(torch.sum(torch.sum(2*output*self.GL(output,L),dim=2),dim=1)+gate))
+        a3 = torch.mean(F.relu(torch.sum(torch.sum(2*res_1*self.GL(res_1,L),dim=2),dim=1)+gate))
+        a4 = torch.mean(F.relu(torch.sum(torch.sum(2*res_2*self.GL(res_2,L),dim=2),dim=1)+gate))
+        a5 = torch.mean(F.relu(torch.sum(torch.sum(2*res_3*self.GL(res_3,L),dim=2),dim=1)+gate))
+        a6 = torch.mean(F.relu(torch.sum(torch.sum(2*res_4*self.GL(res_4,L),dim=2),dim=1)+gate))
+        a7 = torch.mean(F.relu(torch.sum(torch.sum(2*res_5*self.GL(res_5,L),dim=2),dim=1)+gate))
+        a8 = torch.mean(F.relu(torch.sum(torch.sum(2*res_6*self.GL(res_6,L),dim=2),dim=1)+gate))
+        a9 = torch.mean(F.relu(torch.sum(torch.sum(2*res_7*self.GL(res_7,L),dim=2),dim=1)+gate))
+        a10 = torch.mean(F.relu(torch.sum(torch.sum(2*res_8*self.GL(res_8,L),dim=2),dim=1)+gate))
+        a11 = torch.mean(F.relu(torch.sum(torch.sum(2*step_0*self.GL(step_0,L),dim=2),dim=1)+gate))
+        a12 = torch.mean(F.relu(torch.sum(torch.sum(2*step_1*self.GL(step_1,L),dim=2),dim=1)+gate))
         zero = torch.zeros(B,N,16).to(device)
-        ceshi = self.NL(zero)
-        V = 2*step_1*self.NL(step_1)
-        gate = 0.1*torch.ones(B,N,16).to(device)
+        ceshi = self.NL(zero)+self.GL(zero,L)
         
         
-        guance_1 = 0.5*self.NL(step_1)+step_1+0.5*self.NL(step_0+2*self.NL(step_1))
-        guance_2 = 0.5*self.NL(guance_1)+guance_1+0.5*self.NL(step_1+2*self.NL(guance_1))
+        guance_1 = 0.5*self.NL(step_11)+step_1+0.5*self.NL(step_00+2*self.NL(step_11))
+        guance_2 = 0.5*self.NL(guance_1)+guance_1+0.5*self.NL(step_11+2*self.NL(guance_1))
         guance_3 = 0.5*self.NL(guance_2)+guance_2+0.5*self.NL(guance_1+2*self.NL(guance_2))
         guance_4 = 0.5*self.NL(guance_3)+guance_3+0.5*self.NL(guance_2+2*self.NL(guance_3))
         guance_5 = 0.5*self.NL(guance_4)+guance_4+0.5*self.NL(guance_3+2*self.NL(guance_4))
@@ -204,8 +200,22 @@ class ChebNet(nn.Module):
         guance_9 = 0.5*self.NL(guance_8)+guance_8+0.5*self.NL(guance_7+2*self.NL(guance_8))
         guance_10 = 0.5*self.NL(guance_9)+guance_9+0.5*self.NL(guance_8+2*self.NL(guance_9))     
         padding = torch.stack((guance_1,guance_2,guance_3,guance_4,guance_5,guance_6,guance_7,guance_8,guance_9,guance_10),dim=2)#[B,N,10,16]
+
+        V0 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_1*self.NL(guance_1),dim=2),dim=1)+gate))
+        V1 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_2*self.NL(guance_2),dim=2),dim=1)+gate))
+        V2 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_3*self.NL(guance_3),dim=2),dim=1)+gate))
+        V3 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_4*self.NL(guance_4),dim=2),dim=1)+gate))
+        V4 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_5*self.NL(guance_5),dim=2),dim=1)+gate))
+        V5 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_6*self.NL(guance_6),dim=2),dim=1)+gate))
+        V6 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_7*self.NL(guance_7),dim=2),dim=1)+gate))
+        V7 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_8*self.NL(guance_8),dim=2),dim=1)+gate))
+        V8 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_9*self.NL(guance_9),dim=2),dim=1)+gate))
+        V9 = torch.mean(F.relu(torch.sum(torch.sum(2*guance_10*self.NL(guance_10),dim=2),dim=1)+gate))
+        V10 = torch.mean(F.relu(torch.sum(torch.sum(2*step_00*self.NL(step_00),dim=2),dim=1)+gate))
+        V11 = torch.mean(F.relu(torch.sum(torch.sum(2*step_11*self.NL(step_11),dim=2),dim=1)+gate))
+
         
         output_1,_ = self.LSTM(padding.view(-1,10,16))  #[B*N,10,8]
         pre = self.linear1(output_1).view(B,N,10)      
 
-        return pre,zero,ceshi,V,gate,res_1,res_2,res_3,res_4,res_5,res_6,res_7,res_8,step_0,step_1,output,graph_data,L
+        return pre,zero,ceshi,V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,gate,res_1,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12
