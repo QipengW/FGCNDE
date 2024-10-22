@@ -5,7 +5,7 @@ lable = []
 my_net.eval()
 with torch.no_grad():
     for data in test_loader:
-        predict_value,zero,ceshi,V,gate,res_1,res_2,res_3,res_4,res_5,res_6,res_7,res_8,step_0,step_1,output,graph_data,L = my_net(data,A,device)  # [B, N, 1, D]
+        predict_value,zero,ceshi,V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,gate,guance,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12 = my_net(data,A,device)  # [B, N, 1, D]
         b.append(predict_value)
         lable.append(data["flow_y"])
         for shijian in range(10):      
