@@ -6,7 +6,7 @@ criterion = nn.MSELoss()
 train_loss = []
 val_loss = []
 test_loss = []
-optimizer = optim.Adam(params=my_net.parameters(),lr=0.0001,weight_decay=0.0001)
+optimizer = optim.Adam(params=my_net.parameters(),lr=0.0001,weight_decay=0.000001)
 Epoch = 3000
 import torch.nn.functional as F
 my_net.train()
